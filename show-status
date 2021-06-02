@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Path to base dir containing git repos
+projects_dir=""
+
+# List of space seperated repo dirs within the base dir
+projects=""
+
+source `dirname "$0"`/git-status-show
+

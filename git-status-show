@@ -1,0 +1,61 @@
+#!/bin/bash
+
+source `dirname "$0"`/colours.sh
+
+if [ "" == "$projects_dir" ]
+then
+	echo "projects_dir is not set."
+	exit 1
+fi
+
+if [ "" == "$projects" ]
+then
+	echo "projects is not set."
+	exit 1
+fi
+
+output=''
+
+for p in $projects
+do
+	cd $projects_dir/$p
+	if [ $? -ne 0 ]
+	then
+		continue
+	fi
+
+	branch=`git rev-parse --abbrev-ref HEAD`
+	changes=`git status --porcelain | wc -l`
+
+	if [ $changes -eq 0 ]
+	then
+		changes="${GREEN}clean${NC}"
+	else
+		changes="${RED}unclean (${changes})${NC}"
+	fi
+
+	if [ "$1" = "--pull-dev" ]
+	then
+		if [ "$branch" = "dev" ] && [ "$changes" = "${GREEN}clean${NC}" ]
+		then
+			echo -e "${GREEN}Pulling dev branch for $p ...${NC}"
+			git pull
+		else
+			echo -e "${RED}Not pulling dev branch for ${p}${NC}"
+		fi
+	fi
+
+	upstream=`git status | grep "Your branch is up to date with" | wc -l`
+	if [ $upstream -eq 0 ]
+	then
+		sync="${YELLOW}(out-of-sync)${NC}"
+	else
+		sync=""
+	fi
+
+	branch_ref=`git rev-parse HEAD`
+	output="${output}\n${p}|${branch}|${branch_ref}|${changes}|${sync}"
+done
+
+echo -e "$output" | column -t -s "\|"
+
